@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Zxcvbn</RootNamespace>
+    <AssemblyName>zxcvbn</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Dictionaries\english.txt" />
+    <None Remove="Dictionaries\female_names.txt" />
+    <None Remove="Dictionaries\male_names.txt" />
+    <None Remove="Dictionaries\passwords.txt" />
+    <None Remove="Dictionaries\surnames.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Dictionaries\english.txt" />
+    <Resource Include="Dictionaries\female_names.txt" />
+    <Resource Include="Dictionaries\male_names.txt" />
+    <Resource Include="Dictionaries\passwords.txt" />
+    <Resource Include="Dictionaries\surnames.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

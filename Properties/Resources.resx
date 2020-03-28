@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Centuries" xml:space="preserve">
+    <value>centuries</value>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="English" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Dictionaries\english.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="FemaleNames" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Dictionaries\female_names.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;shift_jis</value>
+  </data>
+  <data name="Hours" xml:space="preserve">
+    <value>hours</value>
+  </data>
+  <data name="Instant" xml:space="preserve">
+    <value>instant</value>
+  </data>
+  <data name="MaleNames" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Dictionaries\male_names.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;shift_jis</value>
+  </data>
+  <data name="Minutes" xml:space="preserve">
+    <value>minutes</value>
+  </data>
+  <data name="Months" xml:space="preserve">
+    <value>months</value>
+  </data>
+  <data name="Passwords" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Dictionaries\passwords.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-16</value>
+  </data>
+  <data name="Seconds" xml:space="preserve">
+    <value>seconds</value>
+  </data>
+  <data name="Suggestion.AddAnotherWordOrTwo" xml:space="preserve">
+    <value>Add another word or two. Uncommon words are better.</value>
+  </data>
+  <data name="Suggestion.AllCapsEasy" xml:space="preserve">
+    <value>All-uppercase is almost as easy to guess as all-lowercase</value>
+  </data>
+  <data name="Suggestion.AvoidDatesYearsAssociatedYou" xml:space="preserve">
+    <value>Avoid dates and years that are associated with you</value>
+  </data>
+  <data name="Suggestion.AvoidRepeatedWordsAndChars" xml:space="preserve">
+    <value>Avoid repeated words and characters</value>
+  </data>
+  <data name="Suggestion.AvoidSequences" xml:space="preserve">
+    <value>Avoid sequences</value>
+  </data>
+  <data name="Suggestion.AvoidYearsAssociatedYou" xml:space="preserve">
+    <value>Avoid recent years \n Avoid years that are associated with you</value>
+  </data>
+  <data name="Suggestion.CapsDontHelp" xml:space="preserve">
+    <value>Capitalization doesn't help very much</value>
+  </data>
+  <data name="Suggestion.Empty" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Suggestion.PredictableSubstitutionsEasy" xml:space="preserve">
+    <value>Predictable substitutions like '@' instead of 'a' don't help very much</value>
+  </data>
+  <data name="Suggestion.ReversedWordEasy" xml:space="preserve">
+    <value>Reversed words aren't much harder to guess</value>
+  </data>
+  <data name="Suggestion.UseLongerKeyboardPattern" xml:space="preserve">
+    <value>Use a longer keyboard pattern with more turns</value>
+  </data>
+  <data name="Surnames" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Dictionaries\surnames.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;shift_jis</value>
+  </data>
+  <data name="Warning.CommonNameSurnamesEasy" xml:space="preserve">
+    <value>Common names and surnames are easy to guess</value>
+  </data>
+  <data name="Warning.CommonPasswords" xml:space="preserve">
+    <value>This is a very common password</value>
+  </data>
+  <data name="Warning.DatesEasy" xml:space="preserve">
+    <value>Dates are often easy to guess</value>
+  </data>
+  <data name="Warning.Empty" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Warning.NameSurnamesEasy" xml:space="preserve">
+    <value>Names and surnames by themselves are easy to guess</value>
+  </data>
+  <data name="Warning.RecentYearsEasy" xml:space="preserve">
+    <value>Recent years are easy to guess</value>
+  </data>
+  <data name="Warning.RepeatsLikeAaaEasy" xml:space="preserve">
+    <value>Repeats like "aaa" are easy to guess</value>
+  </data>
+  <data name="Warning.RepeatsLikeAbcSlighterHarder" xml:space="preserve">
+    <value>Repeats like "abcabcabc" are only slightly harder to guess than "abc"</value>
+  </data>
+  <data name="Warning.SequenceAbcEasy" xml:space="preserve">
+    <value>Sequences like abc or 6543 are easy to guess</value>
+  </data>
+  <data name="Warning.ShortKeyboardPatterns" xml:space="preserve">
+    <value>Short keyboard patterns are easy to guess</value>
+  </data>
+  <data name="Warning.SimilarCommonPasswords" xml:space="preserve">
+    <value>This is similar to a commonly used password</value>
+  </data>
+  <data name="Warning.StraightRow" xml:space="preserve">
+    <value>Straight rows of keys are easy to guess</value>
+  </data>
+  <data name="Warning.Top100Passwords" xml:space="preserve">
+    <value>This is a top-100 common password</value>
+  </data>
+  <data name="Warning.Top10Passwords" xml:space="preserve">
+    <value>This is a top-10 common password</value>
+  </data>
+  <data name="Warning.WordEasy" xml:space="preserve">
+    <value>A word by itself is easy to guess</value>
+  </data>
+  <data name="Years" xml:space="preserve">
+    <value>years</value>
+  </data>
+</root>

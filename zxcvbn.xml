@@ -1,0 +1,1541 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Zxcvbn</name>
+    </assembly>
+    <members>
+        <member name="T:Umoxfo.Zxcvbn.DefaultMatcherFactory">
+             <summary>
+             <para>This matcher factory will use all of the default password matchers.</para>
+            
+             <para>Default dictionary matchers use the built-in word lists:
+             passwords, english, male_names, female_names, surnames</para>
+             <para>Also matching against: user data, all dictionaries with l33t substitutions</para>
+             <para>Other default matchers: repeats, sequences, digits, years, dates, spatial</para>
+            
+             <para>See <see cref="T:Umoxfo.Zxcvbn.Matcher.IMatcher"/> and the classes that implement it
+             for more information on each kind of pattern matcher.</para>
+             </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.DefaultMatcherFactory.#ctor(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Create a matcher factory that uses the default list of pattern matchers and userInputs
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.DefaultMatcherFactory.Omnimatch(System.String)">
+            <summary>
+            Match password against the combined matchers that are
+            dictionary (also reverse and with L33t substitutions), spatial, repeats, sequences, RegEx, and data.
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>An enumerable of combine matches</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.IMatcherFactory">
+            <summary>
+            Interface that matcher factories must implement. Matcher factories return a list of the matchers
+            that will be used to evaluate the password
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.IMatcherFactory.Omnimatch(System.String)">
+            <summary>
+            Match password against the combined matchers.
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>An enumerable of combine matches</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.DateMatcher">
+             <summary>
+             A "date" is recognized as:
+             <list type="bullet">
+              <item>
+               <description>Any 3-tuple that starts or ends with a 2- or 4-digit year</description>
+               <list type="bullet">
+                 <item><description>With 2 or 0 separator chars (1.1.91 or 1191)</description></item>
+                 <item><description>Maybe zero-padded (01-01-91 vs 1-1-91)</description></item>
+               </list>
+              </item>
+              <item>
+               <description>A year is from 1 to the current year and is represented by 2 or 4 digits</description>
+              </item>
+              <item>
+               <description>A month between 1 and 12</description>
+              </item>
+              <item>
+               <description>A day between 1 and 31</description>
+              </item>
+             </list>
+            
+             The detected dates are verified based on the Gregorian calendar.
+             </summary>
+             <remarks>
+             Note: instead of using a lazy or greedy regular expression for the entire string,
+             perform an exact match on all substrings of the password to obtain all possible date matches.
+             </remarks>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.DateMatcher.MatchPassword(System.String)">
+            <summary>
+            Find date matches in <paramref name="password"/>
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>An enumerable of date matches</returns>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.DateMatch"/>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.DateMatcher.IsDateInRange(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Returns an indication of whether the specified
+            <paramref name="year"/>, <paramref name="month"/>, and <paramref name="day"/> are valid.
+            </summary>
+            <param name="year">The year (1 through the number of years in the <see cref="F:System.DateTime.MaxValue"/> year).
+            <para>A two-digit or four-digit year is allowed and
+            internally evaluated as a four-digit year based on the Gregorian calendar.</para></param>
+            <param name="month">The month (1 through the number of months in the Gregorian calendar).</param>
+            <param name="day">The day (1 through the number of days in <paramref name="year"/> and <paramref name="month"/>).
+            <para><seealso cref="M:System.DateTime.DaysInMonth(System.Int32,System.Int32)"/></para></param>
+            <returns><c>true</c> if the specified <paramref name="year"/>, <paramref name="month"/>, and <paramref name="day"/> are valid;
+            otherwise, <c>false</c>.</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.DateMatch">
+            <summary>
+            A match made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.DateMatcher"/> that contains some additional information specific to the date match.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DateMatch.Separator">
+            <value>Where a date with separators is matched, this will contain the separator that was used (e.g. '/', '-')</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DateMatch.Year">
+            <value>The detected year</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DateMatch.Month">
+            <value>The detected month</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DateMatch.Day">
+            <value>The detected day</value>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatcher">
+             <summary>
+             <para>This matcher reads in a list of words (in frequency order) and matches substrings of the password against that dictionary.</para>
+            
+             <para>The dictionary to be used can be specified directly by passing an enumerable of strings through the constructor (e.g. for matching again user inputs). Most dictionaries will be in word list files.</para>
+            
+             <para>Using external files is a departure from the JS version of Zxcvbn which bakes in the word lists,
+             so the default dictionaries have been included in the Zxcvbn assembly as embedded resources
+             (to remove the external dependency).
+             Thus when a word list is specified by name, it is first checked to see if it matches and embedded resource
+             and if not is assumed to be an external file. </para>
+            
+             <para>Thus custom dictionaries can be included by providing the name of an external text file,
+             but the built-in dictionaries (english, female_names, male_names, passwords, surnames) can be used without concern
+             about locating a dictionary file in an accessible place.</para>
+            
+             <para>Dictionary word lists must be in decreasing frequency order and contain one word per line with no additional information.</para>
+             </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.DictionaryMatcher.MatchPassword(System.String)">
+            <summary>
+            Match substrings of password with the loaded dictionary
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>An enumerable of dictionary matches</returns>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatch"/>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.ReversedDictionaryMatcher">
+            <summary>
+            This matcher matches substrings of <b>reversed</b> password with the loaded dictionary
+            </summary>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatcher"/>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.ReversedDictionaryMatcher.MatchPassword(System.String)">
+            <summary>
+            Match substrings of reversed password with the loaded dictionary
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>An enumerable of reversed dictionary matches</returns>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatch"/>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatch">
+            <summary>
+            A match made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatcher"/>
+            that contains some additional information about the matched word.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DictionaryMatch.MatchedWord">
+            <summary>
+            The dictionary word matched
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DictionaryMatch.Rank">
+            <summary>
+            The rank of the matched word in the dictionary (i.e. 1 is most frequent, and larger numbers are less common words)
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DictionaryMatch.DictionaryName">
+            <summary>
+            The name of the dictionary the matched word was found in
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DictionaryMatch.BaseEntropy">
+            <summary>
+            The base entropy of the match, calculated from frequency rank
+            </summary>
+            <value>The base entropy of the match, calculated from frequency rank</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.DictionaryMatch.UppercaseEntropy">
+            <summary>
+            Additional entropy for this match from the use of mixed case
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.IMatcher">
+            <summary>
+            All pattern matchers must implement the IMatcher interface.
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.IMatcher.MatchPassword(System.String)">
+            <summary>
+            This function is called once for each matcher for each password being evaluated.
+            It should perform the matching process and return an enumerable of Match objects for each match found.
+            </summary>
+            <param name="password">The password to match</param>
+            <returns></returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.L33tMatcher">
+            <summary>
+            This matcher applies some known l33t character substitutions and then attempts to match against passed in dictionary matchers.
+            This detects passwords like 4pple which has a '4' substituted for an 'a'
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.L33tMatcher.#ctor(Umoxfo.Zxcvbn.Matcher.DictionaryMatcher@)">
+            <summary>
+            Create a l33t matcher that applies substitutions and then matches with the passed in dictionary.
+            </summary>
+            <param name="rankedDictionaries">The dictionary to check transformed passwords against</param>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.L33tMatcher.MatchPassword(System.String)">
+            <summary>
+            Apply applicable l33t transformations and check <paramref name="password"/> against the dictionaries.
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>A list of match objects where l33t substitutions match dictionary words</returns>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.L33tDictionaryMatch"/>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.L33tMatcher.GetRelevantSubstitutions(System.String,System.Collections.Generic.IDictionary{System.Char,System.String})">
+            <summary>
+            Return a map of the useful substitutions that only includes possible substitutions of the password.
+            </summary>
+            <param name="password">The password to check</param>
+            <param name="table">The substitution table</param>
+            <returns>A map of the possible substitutions of the password</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.L33tDictionaryMatch">
+            <summary>
+            A match result made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.L33tMatcher"/> that contains
+            the <see cref="T:Umoxfo.Zxcvbn.Matcher.DictionaryMatcher"/> and extra information related to
+            the additional entropy obtained by using substitution.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.L33tDictionaryMatch.Subs">
+            <summary>
+            The character mappings that are in use for this match
+            </summary>
+            <value>The character mappings that are in use for this match</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.L33tDictionaryMatch.L33tEntropy">
+            <summary>
+            The extra entropy from using l33t substitutions
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.L33tDictionaryMatch.#ctor(Umoxfo.Zxcvbn.Matcher.DictionaryMatch,System.Int32)">
+            <summary>
+            Create a new l33t match from a dictionary match
+            </summary>
+            <param name="dm">The dictionary match to initialize the l33t match from</param>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.RegexMatcher">
+            <summary>
+            <para>Use a regular expression to match against the password.
+            (e.g. 'year' and 'digits' pattern matchers are implemented with this matcher.)</para>
+            <para>A note about cardinality: the cardinality parameter is used to
+            calculate the entropy of matches found with the regular expression (RegEx) matcher.
+            Since this cannot be calculated automatically from the RegEx pattern it must be provided.
+            It can be provided per-character or per-match.
+            Per-match will result in every match having the same entropy (e.g. cardinality)
+            whereas per-character will depend on the match length (e.g. cardinality ^ length)</para>
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.RegexMatcher.#ctor(System.Collections.Generic.IDictionary{System.String,Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo})">
+            <summary>
+            Create a new regular expression (RegEx) pattern matcher
+            </summary>
+            <param name="regexen">The dictionary for RegEx pattern information
+            with a matcher name as key and <see cref="T:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo"/> as value</param>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.RegexMatcher.SetRegexn(System.String,System.String,System.Int32,System.Boolean)">
+            <summary>
+            Set (or add if not exist) a new regular expression (RegEx) pattern information
+            </summary>
+            <param name="matcherName">The name of this matcher (<see cref="P:Umoxfo.Zxcvbn.Matcher.RegexMatch.RxName"/>)</param>
+            <param name="pattern">The RegEx pattern to match</param>
+            <param name="cardinality">The cardinality of this match.
+              Since this is not able to be calculated from a pattern it must be provided.
+              It could be given per-match-character or per-match.</param>
+            <param name="perCharCardinality">True if cardinality is given as per-matched-character</param>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.RegexMatcher.SetRegexn(System.String,System.Text.RegularExpressions.Regex,System.Int32,System.Boolean)">
+            <summary>
+            Set (or add if not exist) a new regular expression (RegEx) pattern information
+            </summary>
+            <param name="matcherName">The name to give this matcher (<see cref="P:Umoxfo.Zxcvbn.Matcher.RegexMatch.RxName"/>)</param>
+            <param name="matchRegex">The RegEx object used to perform matching</param>
+            <param name="cardinality">The cardinality of this match.
+              Since this is not able to be calculated from a pattern it must be provided.
+              It could be given per-match-character or per-match.</param>
+            <param name="perCharCardinality">True if cardinality is given as per-matched-character</param>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.RegexMatcher.MatchPassword(System.String)">
+            <summary>
+            Find all matches of the regular expression (RegEx) in <paramref name="password"/>
+            </summary>
+            <param name="password">The password to check</param>
+            <returns>An enumerable of matches for each RegEx match in <paramref name="password"/></returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo">
+            <summary>
+            Regular expression (RegEx) pattern information that consists:
+            <list type="bullet">
+             <item>
+              <term><see cref="P:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo.MatcherRegex"/></term>
+              <description>A <see cref="T:System.Text.RegularExpressions.Regex"/> object</description>
+             </item>
+             <item>
+              <term><see cref="P:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo.Cardinality"/></term>
+              <description>Cardinality of this match</description>
+             </item>
+             <item>
+              <term><see cref="P:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo.PerCharCardinality"/></term>
+              <description>Whether cardinality is given for each matched character.</description>
+             </item>
+            </list>
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo.MatcherRegex">
+            <summary>
+            The <see cref="T:System.Text.RegularExpressions.Regex"/> object used to perform matching
+            </summary>
+            <value>The <see cref="T:System.Text.RegularExpressions.Regex"/> object used to perform matching</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo.Cardinality">
+             <summary>
+             The cardinality of this match
+            
+             <para>Since this is not able to be calculated from a pattern it must be provided.
+             It could be given per-match-character or per-match.</para>
+             </summary>
+             <value>The cardinality of this match</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.RegexMatcherInfo.PerCharCardinality">
+            <summary>
+            <c>true</c> if cardinality is given as per-matched-character
+            </summary>
+            <value><c>true</c> if cardinality is given as per-matched-character</value>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.RegexMatch">
+            <summary>
+            A match made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.RegexMatcher"/> that contains some additional information
+            specific to the regular expression match.
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.RepeatMatcher">
+            <summary>
+            Match repeated characters in the password (repeats must be more than two characters long to count)
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.RepeatMatcher.MatchPassword(System.String)">
+            <summary>
+            Find repeat matches in <paramref name="password"/>
+            </summary>
+            <param name="password">The password to check</param>
+            <returns>List of repeat matches</returns>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.RepeatMatch"/>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.RepeatMatch">
+            <summary>
+            A match made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.RepeatMatcher"/> that contains some additional information specific to the repeat match.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.RepeatMatch.RepeatCount">
+            <summary>
+            The number of repeated
+            </summary>
+            <value>The number of repeated</value>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.SequenceMatcher">
+            <summary>
+            This matcher detects lexicographical sequences (and in reverse) e.g. abcd, 4567, PONML etc.
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SequenceMatcher.MatchPassword(System.String)">
+            <summary>
+            Find matching sequences in <paramref name="password"/>
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>Enumerable of sequence matches</returns>
+            <seealso cref="T:Umoxfo.Zxcvbn.Matcher.SequenceMatch"/>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.SequenceMatch">
+            <summary>
+            A match made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.SequenceMatcher"/>
+            that contains some additional information specific to the sequence match.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.SequenceMatch.SequenceName">
+            <summary>
+            The name of the sequence that the match was found in (e.g. 'lower', 'upper', 'digits')
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.SequenceMatch.SequenceSize">
+            <summary>
+            The size of the sequence the match was found in (e.g. 26 for lowercase letters)
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.SequenceMatch.Ascending">
+            <summary>
+            Whether the match was found in ascending order (cdefg) or not (zyxw)
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.SpatialMatcher">
+            <summary>
+            <para>A matcher that checks for keyboard layout patterns (e.g. 78523 on a keypad, or plkmn on a QWERTY keyboard).</para>
+            <para>Has patterns for QWERTY, DVORAK, JIS, numeric keypad, and mac numeric keypad</para>
+            <para>The matcher accounts for shifted characters (e.g. qwErt or po9*7y)
+            when detecting patterns as well as multiple changes in direction.</para>
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SpatialMatcher.MatchPassword(System.String)">
+            <summary>
+            Match the password against the known keyboard layouts
+            </summary>
+            <param name="password">The password to match</param>
+            <returns>List of matching patterns</returns>
+            <seealso cref="M:Umoxfo.Zxcvbn.Matcher.SpatialMatcher.SpatialMatch(Umoxfo.Zxcvbn.Matcher.SpatialGraph,System.String)"/>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SpatialMatcher.SpatialMatch(Umoxfo.Zxcvbn.Matcher.SpatialGraph,System.String)">
+            <summary>
+            Match the password against a single pattern
+            </summary>
+            <param name="graph">Adjacency graph for this key layout</param>
+            <param name="password">The password to match</param>
+            <returns>List of matching patterns</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SpatialGraph.IsCharAdjacent(System.Char,System.Char)">
+            <summary>
+            Returns true when testAdjacent is in c's adjacency list
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SpatialGraph.GetAdjacentCharDirection(System.Char,System.Char)">
+            <summary>
+            Returns the 'direction' of the adjacent character (i.e. index in the adjacency list).
+            If the character is not adjacent, -1 is returned
+            </summary>
+            <param name="c">Character</param>
+            <param name="adjacent">Adjacent character</param>
+            <returns>A tuple for the direction of the adjacent character and
+            whether the matching character is shifted.</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SpatialGraph.CalculateGuesses(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Calculate guesses for a math that was found on this adjacency graph
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.SpatialGraph.CalculateEntropy(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Calculate entropy for a math that was found on this adjacency graph
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Matcher.SpatialMatch">
+            <summary>
+            A match made with the <see cref="T:Umoxfo.Zxcvbn.Matcher.SpatialMatcher"/>
+            that contains some additional information specific to the spatial match.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.SpatialMatch.Graph">
+            <summary>
+            The name of the keyboard layout used to make the spatial match
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.SpatialMatch.Turns">
+            <summary>
+            The number of turns made (i.e. when direction of adjacent keys changes)
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Matcher.SpatialMatch.ShiftedCount">
+            <summary>
+            The number of shifted characters matched in the pattern (adds to entropy)
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.Matching.SetDictionary(System.String,System.String)">
+            <summary>
+            Set (or add if not exist) a new dictionary.
+            <paramref name="wordListPath"/> must be the path (relative or absolute)
+            to a file containing one word per line, entirely in lowercase, ordered by frequency (decreasing).
+            </summary>
+            <param name="name">The name provided to the dictionary used</param>
+            <param name="wordListPath">The filename of the dictionary (full or relative path)</param>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Matcher.Matching.SetDictionary(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Set (or add if not exist) a new dictionary from the passed in word list.
+            If there is any frequency order then they should be in decreasing frequency order.
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Properties.Resources">
+            <summary>
+              ローカライズされた文字列などを検索するための、厳密に型指定されたリソース クラスです。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.ResourceManager">
+            <summary>
+              このクラスで使用されているキャッシュされた ResourceManager インスタンスを返します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Culture">
+            <summary>
+              すべてについて、現在のスレッドの CurrentUICulture プロパティをオーバーライドします
+              現在のスレッドの CurrentUICulture プロパティをオーバーライドします。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Centuries">
+            <summary>
+              centuries に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Days">
+            <summary>
+              days に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.DVORAK">
+            <summary>
+              `~ 1! 2@ 3# 4$ 5% 6^ 7&amp; 8* 9( 0) [{ ]}
+               &apos;&quot; ,&lt; .&gt; pP yY fF gG cC rR lL /? =+ \|
+                aA oO eE uU iI dD hH tT nN sS -_
+                 ;: qQ jJ kK xX bB mM wW vV zZ
+            に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.English">
+             <summary>
+               you
+            i
+            the
+            to
+            a
+            &apos;s
+            it
+            and
+            that
+            &apos;t
+            of
+            is
+            in
+            what
+            we
+            me
+            this
+            he
+            for
+            my
+            on
+            have
+            your
+            do
+            was
+            &apos;m
+            no
+            not
+            be
+            are
+            don
+            &apos;re
+            know
+            can
+            with
+            but
+            all
+            so
+            just
+            there
+            here
+            they
+            like
+            &apos;ll
+            get
+            she
+            go
+            if
+            right
+            out
+            about
+            up
+            at
+            him
+            now
+            oh
+            one
+            come
+            well
+            her
+            how
+            yeah
+            &apos;ve
+            will
+            got
+            want
+            think
+            as
+            see
+            did
+            good
+            who
+            why
+            from
+            let
+            his
+            yes
+            when
+            going
+            time
+            an
+            okay
+            back
+            look
+            us
+            would
+            them
+            where
+            were
+            take
+            then
+            had
+            or
+            been
+            our
+            gonna
+            tell
+            really
+            man
+            some
+            say
+            hey
+            could
+            &apos;d
+            didn
+            by
+            need
+            something
+            has
+            too
+            more
+            way
+            down
+            make
+            very
+            never
+            only
+            people
+            ove [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.ExtraSuggestion_AddAnotherWord">
+            <summary>
+              Add another word or two. Uncommon words are better. に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.FemaleNames">
+             <summary>
+               mary
+            patricia
+            linda
+            barbara
+            elizabeth
+            jennifer
+            maria
+            susan
+            margaret
+            dorothy
+            lisa
+            nancy
+            karen
+            betty
+            helen
+            sandra
+            donna
+            carol
+            ruth
+            sharon
+            michelle
+            laura
+            sarah
+            kimberly
+            deborah
+            jessica
+            shirley
+            cynthia
+            angela
+            melissa
+            brenda
+            amy
+            anna
+            rebecca
+            virginia
+            kathleen
+            pamela
+            martha
+            debra
+            amanda
+            stephanie
+            carolyn
+            christine
+            marie
+            janet
+            catherine
+            frances
+            ann
+            joyce
+            diane
+            alice
+            julie
+            heather
+            teresa
+            doris
+            gloria
+            evelyn
+            jean
+            cheryl
+            mildred
+            katherine
+            joan
+            ashley
+            judith
+            rose
+            janice
+            kelly
+            nicole
+            judy
+            christina
+            kathy
+            theresa
+            beverl [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Hours">
+            <summary>
+              hours に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Instant">
+            <summary>
+              instant に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.JIS">
+            <summary>
+              1! 2&quot; 3# 4$ 5% 6&amp; 7&apos; 8( 9) 00 -= ^~ ¥|
+            qQ wW eE rR tT yY uU iI oO pP @` [{
+             aA sS dD fF gG hH jJ kK lL ;+ :* ]}
+              zZ xX cC vV bB nN mM ,&lt; .&gt; /?
+            に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Keypad">
+             <summary>
+                 / * -
+            7 8 9 +
+            4 5 6
+            1 2 3
+              0 .
+             に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.mac_Keypad">
+             <summary>
+                 = / *
+            7 8 9 -
+            4 5 6 +
+            1 2 3
+              0 .
+             に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.MaleNames">
+             <summary>
+               james
+            john
+            robert
+            michael
+            william
+            david
+            richard
+            charles
+            joseph
+            thomas
+            christopher
+            daniel
+            paul
+            mark
+            donald
+            george
+            kenneth
+            steven
+            edward
+            brian
+            ronald
+            anthony
+            kevin
+            jason
+            matthew
+            gary
+            timothy
+            jose
+            larry
+            jeffrey
+            frank
+            scott
+            eric
+            stephen
+            andrew
+            raymond
+            gregory
+            joshua
+            jerry
+            dennis
+            walter
+            patrick
+            peter
+            harold
+            douglas
+            henry
+            carl
+            arthur
+            ryan
+            roger
+            joe
+            juan
+            jack
+            albert
+            jonathan
+            justin
+            terry
+            gerald
+            keith
+            samuel
+            willie
+            ralph
+            lawrence
+            nicholas
+            roy
+            benjamin
+            bruce
+            brandon
+            adam
+            harry
+            fred
+            wayne
+            billy
+            steve
+            louis
+            jeremy
+            aar [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Minutes">
+            <summary>
+              minutes に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Months">
+            <summary>
+              months に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Passwords">
+             <summary>
+               123456
+            123456789
+            qwerty
+            password
+            111111
+            12345678
+            abc123
+            1234567
+            password1
+            12345
+            1234567890
+            123123
+            000000
+            iloveyou
+            1234
+            1q2w3e4r5t
+            qwertyuiop
+            123
+            monkey
+            dragon
+            123456a
+            654321
+            123321
+            666666
+            1qaz2wsx
+            myspace1
+            121212
+            homelesspa
+            123qwe
+            a123456
+            123abc
+            1q2w3e4r
+            qwe123
+            7777777
+            qwerty123
+            target123
+            tinkle
+            987654321
+            qwerty1
+            222222
+            zxcvbnm
+            1g2w3e4r
+            gwerty
+            zag12wsx
+            gwerty123
+            555555
+            fuckyou
+            112233
+            asdfghjkl
+            1q2w3e
+            123123123
+            qazwsx
+            computer
+            princess
+            12345a
+            ashley
+            159753
+            michael
+            football
+            sunshine
+            1234qwer
+            iloveyou1
+            aaaaaa
+             [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.QWERTY">
+            <summary>
+              `~ 1! 2@ 3# 4$ 5% 6^ 7&amp; 8* 9( 0) -_ =+
+               qQ wW eE rR tT yY uU iI oO pP [{ ]} \|
+                aA sS dD fF gG hH jJ kK lL ;: &apos;&quot;
+                 zZ xX cC vV bB nN mM ,&lt; .&gt; /?
+            に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Seconds">
+            <summary>
+              seconds に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Date_AvoidDates">
+            <summary>
+              Avoid dates and years that are associated with you に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Default_UseFewWords">
+            <summary>
+              Use a few words, avoid common phrases \n No need for symbols, digits, or uppercase letters に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Dictionary_AllCapsEasy">
+            <summary>
+              All-uppercase is almost as easy to guess as all-lowercase に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Dictionary_CapsEasy">
+            <summary>
+              Capitalization doesn&apos;t help very much に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Dictionary_PredictableSubstitutionsEasy">
+            <summary>
+              Predictable substitutions like &apos;@&apos; instead of &apos;a&apos; don&apos;t help very much に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Dictionary_ReversedEasy">
+            <summary>
+              Reversed words aren&apos;t much harder to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Regex_AvoidRecentYears">
+            <summary>
+              Avoid recent years \n Avoid years that are associated with you に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Repeat_AvoidRepeatedWords">
+            <summary>
+              Avoid repeated words and characters に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_ReversedWordEasy">
+            <summary>
+              Reversed words aren&apos;t much harder to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Sequence_AvoidSequences">
+            <summary>
+              Avoid sequences に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Suggestion_Spatial_UseLongerKeyboardPattern">
+            <summary>
+              Use a longer keyboard pattern with more turns に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Surnames">
+             <summary>
+               smith
+            johnson
+            williams
+            brown
+            jones
+            garcia
+            miller
+            davis
+            rodriguez
+            martinez
+            hernandez
+            lopez
+            gonzalez
+            wilson
+            anderson
+            thomas
+            taylor
+            moore
+            jackson
+            martin
+            lee
+            perez
+            thompson
+            white
+            harris
+            sanchez
+            clark
+            ramirez
+            lewis
+            robinson
+            walker
+            young
+            allen
+            king
+            wright
+            scott
+            torres
+            nguyen
+            hill
+            flores
+            green
+            adams
+            nelson
+            baker
+            hall
+            rivera
+            campbell
+            mitchell
+            carter
+            roberts
+            gomez
+            phillips
+            evans
+            turner
+            diaz
+            parker
+            cruz
+            edwards
+            collins
+            reyes
+            stewart
+            morris
+            morales
+            murphy
+            cook
+            rogers
+            gutierrez
+            ortiz
+            morgan
+            cooper
+            peterson
+            bailey
+            reed
+             [残りの文字列は切り詰められました]&quot;; に類似しているローカライズされた文字列を検索します。
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Date_Dates">
+            <summary>
+              Dates are often easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_CommonNames">
+            <summary>
+              Common names and surnames are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_EasyEnglishWord">
+            <summary>
+              A word by itself is easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_EasyNames">
+            <summary>
+              Names and surnames by themselves are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_SimilarCommonPasswords">
+            <summary>
+              This is similar to a commonly used password に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_Top100Passwords">
+            <summary>
+              This is a top-100 common password に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_Top10Passwords">
+            <summary>
+              This is a top-10 common password に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Dictionary_VeryCommonPasswords">
+            <summary>
+              This is a very common password に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Regex_Digits">
+            <summary>
+              Digits are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Regex_RecentYears">
+            <summary>
+              Recent years are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Repeat_LikeAAA">
+            <summary>
+              Repeats like &quot;aaa&quot; are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Repeat_LikeABCABCABC">
+            <summary>
+              Repeats like &quot;abcabcabc&quot; are only slightly harder to guess than &quot;abc&quot; に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Sequence_SequenceABC6543">
+            <summary>
+              Sequences like abc or 6543 are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Spatial_ShortKeyboardPatterns">
+            <summary>
+              Short keyboard patterns are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Warning_Spatial_StraightRowOfKey">
+            <summary>
+              Straight rows of keys are easy to guess に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Properties.Resources.Years">
+            <summary>
+              years に類似しているローカライズされた文字列を検索します。
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Report.Feedback">
+            <summary>
+            Verbal feedback to help choose better passwords.
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Report.Feedback.Warning">
+            <summary>
+            Explains what's wrong, not always set.
+            </summary>
+            <value>Explains what's wrong, e.g. 'this is a top-10 common password'.
+            Not always set -- sometimes an empty string</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Report.Feedback.Suggestions">
+            <summary>
+            A possibly-empty list of suggestions to help choose a less guessable password.
+            </summary>
+            <value>A possibly-empty list of suggestions to help
+            choose a less guessable password. e.g. 'Add another word or two'</value>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Report.Scoring.FindBestMatchSequences(System.String,System.Collections.Generic.IEnumerable{Umoxfo.Zxcvbn.Match},System.Boolean)">
+             <summary>
+             Returns a new result structure initialized with a minimum entropy of
+             all passed matches and a non-overlapping sequence with a minimum guess;
+             adding brute-force matches where there is no smaller entropy found pattern matches.
+             </summary>
+             <remarks>
+             The following is a O(l_max* (n + m)) dynamic programming algorithm for
+             a length-n password with m candidate matches.l_max is the maximum optimal
+             sequence length spanning each prefix of the password.In practice it rarely exceeds 5 and
+             the search terminates rapidly.
+            
+             The optimal "minimum guesses" sequence is here defined to be the sequence that
+             minimizes the following function:
+            
+                g = l! * Product(m.guesses for m in sequence) + D ^ (l - 1)
+            
+             where l is the length of the sequence.
+            
+             The factorial term is the number of ways to order l patterns.
+            
+             The D^(l-1) term is another length penalty, roughly capturing the idea that
+             an attacker will try lower-length sequences first before trying length-l sequences.
+            
+             For example, consider a sequence that is date-repeat-dictionary.
+              - An attacker would need to try other date-repeat-dictionary combinations,
+                hence the product term.
+              - An attacker would need to try repeat-date-dictionary, dictionary-repeat-date,
+                ..., hence the factorial term.
+              - An attacker would also likely try length-1 (dictionary) and length-2 (dictionary-date)
+                sequences before length-3. assuming at minimum D guesses per pattern type,
+                D^(l-1) approximates Sum(D^i for i in [1..l - 1]
+             </remarks>
+             <param name="matches">Password being evaluated</param>
+             <param name="password">List of matches found against the password</param>
+             <returns>A <see cref="T:Umoxfo.Zxcvbn.Result"/> object for the lowest entropy and the most guessable match sequences</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Report.Scoring.MostGuessableMatchSequence(System.String,System.Collections.Generic.IEnumerable{Umoxfo.Zxcvbn.Match},System.Boolean)">
+            <summary>
+            Returns the non-overlapping sequence with minimum guesses.
+            </summary>
+            <param name="password">Password being evaluated</param>
+            <param name="matches">List of matches found against the password</param>
+            <param name="excludeAdditive"></param>
+            <returns>A <see cref="T:Umoxfo.Zxcvbn.Result"/> object for the lowest entropy match sequence</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Report.TimeEstimates.EstimateAttackTimes(System.Double,Umoxfo.Zxcvbn.Translation@)">
+            <summary>
+            Calculate a rough estimate of crack time for entropy,
+            see zxcbn scoring.coffee for more information on the model used
+            </summary>
+            <param name="entropy">Entropy of password</param>
+            <returns>An estimation of seconds taken to crack password</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Report.TimeEstimates.DisplayTime(System.Decimal,Umoxfo.Zxcvbn.Translation@)">
+            <summary>
+            Converts a specified number of seconds to a human-friendly format, rounding up the decimal points.
+            </summary>
+            <param name="seconds">A number of seconds</param>
+            <param name="translation">Language in which the string is returned</param>
+            <returns>A human-friendly time string</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Report.CrackTimeSeconds">
+            <summary>
+            Estimated crack time, in seconds
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Report.CrackTimeSeconds.OnlineThrottling100PerHour">
+            <summary>
+            Online attacks on a service that rate limits password auth attempts.
+            </summary>
+            <value>Online attacks on a service that rate limits password auth attempts.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Report.CrackTimeSeconds.OnlineNoThrottling10PerSecond">
+            <summary>
+            Online attack on a service that doesn't rate limit,
+            or where an attacker has outsmarted rate limiting.
+            </summary>
+            <value>Online attack on a service that doesn't rate limit,
+            or where an attacker has outsmarted rate limiting.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Report.CrackTimeSeconds.OfflineSlowHashing1e4PerSecond">
+            <summary>
+            Offline attack assumes multiple attackers,
+            proper user-unique salting, and a slow hash function
+            with moderate work factors, such as BCrypt, SCrypt, PBKDF2.
+            </summary>
+            <value>Offline attack assumes multiple attackers,
+            proper user-unique salting, and a slow hash function
+            with moderate work factors</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Report.CrackTimeSeconds.OfflineFastHashing1e10PerSecond">
+            <summary>
+            Offline attack with user-unique salting but a fast hash function like
+            SHA-1, SHA-256 or MD5. A wide range of reasonable numbers anywhere
+            from one billion - one trillion guesses per second,
+            depending on several cores and machines. Ball parking at 10B/sec.
+            </summary>
+            <value>Offline attack with user-unique salting but a fast hash function like
+            SHA-1, SHA-256 or MD5.</value>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Report.CrackTimeDisplay">
+            <summary>
+            The <see cref="T:Umoxfo.Zxcvbn.Report.CrackTimeSeconds">crack time</see>,
+            as a human friendlier string:
+            "instant", "3 minutes", "centuries", etc.
+            </summary>
+            <value>The <see cref="T:Umoxfo.Zxcvbn.Report.CrackTimeSeconds">crack time</see>,
+            as a human friendlier string</value>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.PasswordScoring">
+            <summary>
+            Some useful shared functions used for evaluating passwords
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.PasswordScoring.Binomial(System.Int32,System.Int32)">
+            <summary>
+            Calculate binomial coefficient (i.e. nCk)
+            Uses same algorithm as zxcvbn (cf. scoring.coffee), from http://blog.plover.com/math/choose.html
+            </summary>
+            <param name="k">k</param>
+            <param name="n">n</param>
+            <returns>Binomial coefficient; nCk</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.PasswordScoring.PasswordCardinality(System.String)">
+            <summary>
+            Calculate the cardinality of the minimal character sets necessary to brute force the password (roughly)
+            (e.g. lowercase = 26, numbers = 10, lowercase + numbers = 36)
+            </summary>
+            <param name="password">The password to evaluate</param>
+            <returns>An estimation of the cardinality of characters for this password</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.PasswordScoring.CalculateUppercaseVariations(System.String)">
+            <summary>
+            Estimate the extra entropy and "guesses" in a token that comes from mixing upper and lowercase letters.
+            </summary>
+            <param name="word">The word to calculate uppercase entropy and "guesses" for</param>
+            <returns>An estimation of the entropy and "guesses" gained from casing in <paramref name="word"/></returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.PasswordScoring.GuessesToScore(System.Double)">
+            <summary>
+            Returns a score for password strength from the <see cref="P:Umoxfo.Zxcvbn.Result.Guesses"/>.
+            Scores are 0..6, 0 being minimum and 6 maximum strength.
+            </summary>
+            <param name="guesses">Guesses of password</param>
+            <returns>Password strength of 0-6, 0 is minimum</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.PasswordScoring.EntropyToScore(System.Double)">
+            <summary>
+            Returns a score for password strength from the entropy.
+            Scores are 0..6, 0 being minimum and 6 maximum strength.
+            </summary>
+            <param name="entropy">Entropy of password</param>
+            <returns>Password strength of 0-6, 0 is minimum</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Result">
+            <summary>
+            The results of zxcvbn's password analysis
+            </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.Password">
+            <summary>
+            The password that was used to generate these results.
+            </summary>
+            <value>The password that was used to generate these results.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.Entropy">
+            <summary>
+            A calculated estimate of how many bits of entropy the password covers.
+            </summary>
+            <value>A calculated estimate of how many bits of entropy the password covers.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.Guesses">
+            <summary>
+            Estimated guesses needed to crack password
+            </summary>
+            <value>Estimated guesses needed to crack password</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.GuessesLog10">
+            <summary>
+            Order of <see cref="P:Umoxfo.Zxcvbn.Result.Guesses"/>
+            </summary>
+            <value>Order of <see cref="P:Umoxfo.Zxcvbn.Result.Guesses"/></value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.EntropySequence">
+            <summary>
+            The list of matches that were used to create the entropy calculation.
+            </summary>
+            <value>The list of matches that were used to create the entropy calculation.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.GuessesSequence">
+            <summary>
+            The list of matches that were used to create the guesses calculation.
+            </summary>
+            <value>The list of matches that were used to create the guesses calculation.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.MatchSequence">
+            <summary>
+            The list of matches that were used to create the entropy calculation.
+            </summary>
+            <value>The list of matches that were used to create the entropy calculation.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.CalcTime">
+            <summary>
+            The number of milliseconds that zxcvbn took to calculate results for this password.
+            </summary>
+            <value>The number of milliseconds that zxcvbn took to calculate results for this password.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.CrackTimeSeconds">
+            <summary>
+            An estimation of the crack time for this password in seconds.
+            </summary>
+            <value>An estimation of the crack time for this password in seconds.</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.CrackTimeDisplay">
+            <summary>
+            A friendly string for the crack time (like "centuries", "instant", "7 minutes", "14 hours" etc.).
+            </summary>
+            <value>A friendly string for the crack time (like "centuries", "instant", "7 minutes", "14 hours" etc.).</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Result.Score">
+            <summary>
+            A score from 0 to 6 (inclusive), with 0 being least secure
+            and 6 being most secure calculated from <see cref="P:Umoxfo.Zxcvbn.Result.Guesses">guesses</see>
+            </summary>
+            <value>[0,1,2,3,4,5,6] if crack time is less than
+            [10^3, 10^6, 10^8, 10^10, 10^11, 10^12, Infinity] seconds.// </value>
+        </member>
+        <!-- Badly formed XML comment ignored for member "P:Umoxfo.Zxcvbn.Result.Feedback" -->
+        <member name="T:Umoxfo.Zxcvbn.Match">
+             <summary>
+             <para>A single match that one of the pattern matchers has made against the password being tested.</para>
+            
+             <para>Some pattern matchers implement subclasses of match that can provide more information on their specific results.</para>
+            
+             <para>Matches must all have the <see cref="P:Umoxfo.Zxcvbn.Match.Pattern"/>, <see cref="P:Umoxfo.Zxcvbn.Match.i"/>, <see cref="P:Umoxfo.Zxcvbn.Match.j"/>, <see cref="P:Umoxfo.Zxcvbn.Match.Token"/>, and
+             <see cref="P:Umoxfo.Zxcvbn.Match.Entropy"/> fields (i.e. all but the <see cref="P:Umoxfo.Zxcvbn.Match.Cardinality"/> field, which is optional)
+             set before being returned from the matcher in which they are created.</para>
+             </summary>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Match.Pattern">
+            <summary>
+            The name of the pattern matcher used to generate this match
+            </summary>
+            <value>The name of the pattern matcher used to generate this match</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Match.i">
+            <summary>
+            The start index in the password string of the matched token.
+            </summary>
+            <value>The start index in the password string of the matched token</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Match.j">
+            <summary>
+            The end index in the password string of the matched token.
+            </summary>
+            <value>The end index in the password string of the matched token</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Match.Token">
+            <summary>
+            The portion of the password that was matched
+            </summary>
+            <value>The portion of the password that was matched</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Match.Cardinality">
+            <summary>
+            Some pattern matchers can associate the cardinality of the set of possible matches that
+            the entropy calculation is derived from. Not all matchers provide a value for cardinality.
+            </summary>
+            <value>The cardinality of the set of possible matches that the entropy calculation is derived from</value>
+        </member>
+        <member name="P:Umoxfo.Zxcvbn.Match.Entropy">
+            <summary>
+            The entropy that this portion of the password covers using the current pattern matching technique
+            </summary>
+            <value>The entropy that this portion of the password covers using the current pattern matching technique</value>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Translation">
+            <summary>
+            The supported languages.
+            </summary>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Utility">
+            <summary>
+            A few useful extension methods used through the Zxcvbn project
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Utility.ToInt(System.String)">
+            <summary>
+            Quickly convert a string to an integer, uses TryParse so any non-integers will return zero
+            </summary>
+            <param name="str">String to parse into an int</param>
+            <returns>Parsed int or zero</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Utility.GetDictionaryResourceLines(System.String@)">
+            <summary>
+            Returns a list of the lines of text from an embedded dictionary resource.
+            </summary>
+            <param name="dictionaryResource">The dictionary resource as text</param>
+            <returns>An enumerable of lines of the dictionary resource or null if the resource does not exist</returns>
+        </member>
+        <member name="T:Umoxfo.Zxcvbn.Zxcvbn">
+             <summary>
+             <para>Zxcvbn is used to estimate the strength of passwords. </para>
+            
+             <para>This implementation is a port of the Zxcvbn JavaScript library by Dan Wheeler:
+             https://github.com/lowe/zxcvbn </para>
+            
+             <para>To quickly evaluate a password, use the <see cref="M:Umoxfo.Zxcvbn.Zxcvbn.MeasurePassword(System.String,System.Collections.Generic.IEnumerable{System.String})"/> static function.</para>
+            
+             <para>To evaluate a number of passwords, create an instance of this object and repeatedly call
+             the <see cref="M:Umoxfo.Zxcvbn.Zxcvbn.EvaluatePassword(System.String,System.Collections.Generic.IEnumerable{System.String})"/> function.
+             Reusing the Zxcvbn instance will ensure that pattern matchers will only be created once
+             rather than being recreated for each password evaluated.</para>
+             </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Zxcvbn.#ctor(System.Collections.Generic.IEnumerable{System.String},Umoxfo.Zxcvbn.Translation)">
+            <summary>
+            Create a new instance of Zxcvbn that uses the default matchers and user inputs list.
+            </summary>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Zxcvbn.#ctor(Umoxfo.Zxcvbn.Matcher.Matching,Umoxfo.Zxcvbn.Translation)">
+            <summary>
+            Create an instance of Zxcvbn that will use the given matcher factory to create matchers to use
+            to find password weakness.
+            </summary>
+            <param name="matcherFactory">The factory used to create the pattern matchers used</param>
+            <param name="translation">The language in which the strings are returned</param>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Zxcvbn.MeasurePassword(System.String,System.Collections.Generic.IEnumerable{System.String})">
+             <summary>
+             <para>A static function to match a password against the default matchers without having to create
+             an instance of Zxcvbn yourself, with supplied user data. </para>
+            
+             <para>Supplied user data will be treated as another kind of dictionary matching.</para>
+             </summary>
+             <param name="password">A password string to test</param>
+             <param name="userInputs">Optionally, the user inputs list</param>
+             <returns>The results of the password evaluation</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Zxcvbn.EvaluatePassword(System.String,System.Collections.Generic.IEnumerable{System.String})">
+             <summary>
+             <para>Perform the password matching on the given password and user inputs,
+             returning the result structure with information on the lowest entropy match found.</para>
+            
+             <para>User data will be treated as another kind of dictionary matching,
+             but can be different for each password being evaluated.</para>
+             </summary>
+             <param name="password">A password string to test</param>
+             <param name="userInputs">Optionally, an enumerable of user data</param>
+             <returns>Result for the lowest entropy match</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Zxcvbn.CalculatePasswordScore(System.String,System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Returns a password score for password matching.
+            </summary>
+            <param name="password">A password string to test</param>
+            <param name="userInputs">Optionally, an enumerable of user data</param>
+            <returns>Password score of 0-6, 0 is minimum</returns>
+        </member>
+        <member name="M:Umoxfo.Zxcvbn.Zxcvbn.CalculateBruteforcePasswordScore(System.String)">
+            <summary>
+            Returns a password score for brute-force matching.
+            </summary>
+            <param name="password">A password string to test</param>
+            <returns>Password score of 0-6, 0 is minimum</returns>
+        </member>
+    </members>
+</doc>
